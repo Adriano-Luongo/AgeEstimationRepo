@@ -55,8 +55,6 @@ def vggface_custom_build(input_shape, weights="vggface2", net="vgg16"):
     hidden_dim = 4096
     from keras_vggface.vggface import VGGFace
     vgg_model = VGGFace(include_top=False, input_shape=(224, 224, 3))
-    for layer in vgg_model.layers[:-3]:
-        layer.trainable = False
     features = vgg_model.get_layer('pool5').output
     x = Flatten(name='flatten')(features)
     x = Dense(hidden_dim, activation='relu', kernel_regularizer=l2(l=0.01), bias_regularizer=l2(l=0.01), name='fc6')(x)
