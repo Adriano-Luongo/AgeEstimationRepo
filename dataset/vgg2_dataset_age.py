@@ -249,7 +249,7 @@ class Vgg2DatasetAge:
 
         # Contiamo il numero di elementi nella partizione
         if load_partition.startswith('train'):
-            self.size = 100000
+            self.size = 300000
         elif load_partition.startswith('val'):
             self.size = 20000
         elif load_partition.startswith('test'):
