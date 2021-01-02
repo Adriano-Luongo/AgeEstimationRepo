@@ -11,10 +11,15 @@ parser = argparse.ArgumentParser(description='Common training and evaluation.')
 parser.add_argument('--lpf', dest='lpf_size', type=int, choices=available_lpf, default=1,
                     help='size of the lpf filter (1 means no filtering)')
 parser.add_argument('--cutout', action='store_true', help='use cutout augmentation')
+# Learning rate
 parser.add_argument('--weight_decay', type=float)
-parser.add_argument('--lr', default='0.001', help='Initial learning rate or init:factor:epochs', type=float, dest='lr')
+parser.add_argument('--lr', default='0.001', help='Initial learning rate or init:factor:epochs', type=float)
+parser.add_argument('--lr_sched', default=None, type=str, help='defines the learning rate decay factor (1) and '
+                                                               'decay epochs (2), separeted by <:>')
+# Optimizer
 parser.add_argument('--optimizer', default='adam', type=str, choices=available_optimizers)
-parser.add_argument('--momentum', action='store_true')
+parser.add_argument('--momentum', action='store_true', help='Used only of the optimizer is sgd')
+
 parser.add_argument('--dataset', dest='dataset', type=str, default="vggface2_age",
                     help='dataset to use for the training')
 parser.add_argument('--mode', dest='mode', type=str, choices=available_modes, default='train', help='train or test')
@@ -60,12 +65,6 @@ else:
     print('unknown dataset %s' % args.dataset)
     exit(1)
 
-# Learning Rate
-lr = args.lr.split(':')
-initial_learning_rate = float(lr[0])  # 0.002
-learning_rate_decay_factor = float(lr[1]) if len(lr) > 1 else 0.5
-learning_rate_decay_epochs = int(lr[2]) if len(lr) > 2 else 40
-
 # Epochs to train
 n_training_epochs = args.n_training_epochs
 
@@ -73,7 +72,14 @@ n_training_epochs = args.n_training_epochs
 batch_size = args.batch_size
 
 
+# Learning Rate scheduler
 def step_decay_schedule(initial_lr, decay_factor, step_size):
+    lr = lr_sched.split(':')
+    learning_rate_decay_factor = float(lr[0]) if len(lr) > 1 else 0.5
+    learning_rate_decay_epochs = int(lr[1]) if len(lr) > 2 else 40
+    print("LR_SCHEDULER: using decay factor " + str(learning_rate_decay_factor) + " and decay epochs " + str(
+        learning_rate_decay_epochs))
+
     def schedule(epoch):
         return initial_lr * (decay_factor ** np.floor(epoch / step_size))
 
@@ -156,9 +162,12 @@ if not os.path.isdir(filepath):
 # AUGMENTATION
 if args.augmentation == 'vggface2':
     from dataset_tools import VGGFace2Augmentation
+
     custom_augmentation = VGGFace2Augmentation()
-else:
+
+else:  # default
     from dataset_tools import DefaultAugmentation
+
     custom_augmentation = DefaultAugmentation()
 
 if args.mode.startswith('train'):
@@ -168,14 +177,16 @@ if args.mode.startswith('train'):
     dataset_validation = Dataset('val', target_shape=INPUT_SHAPE, batch_size=batch_size,
                                  preprocessing=args.preprocessing)
 
-    # Creiamo lo scheduler da dare alla funzione di training
-    #lr_sched = step_decay_schedule(initial_lr=initial_learning_rate,decay_factor=learning_rate_decay_factor, step_size=learning_rate_decay_epochs)
-
     # Specifichiamo la variabile da tenere sotto controllo in fase di allenamento per salvare un CheckPoint
     monitor = 'val_loss'
     checkpoint = keras.callbacks.ModelCheckpoint(weight_file_name, verbose=1, save_best_only=True, monitor=monitor)
     tbCallBack = keras.callbacks.TensorBoard(log_dir=tensor_board_directory, write_graph=True, write_images=True)
     callbacks_list = [checkpoint, tbCallBack]
+
+    # Creiamo lo scheduler da dare alla funzione di training
+    if args.lr_sched is not None and ':' in args.lr_sched:
+        lr_sched = step_decay_schedule()
+        callbacks_list = [checkpoint, tbCallBack, lr_sched]
 
     if args.resume:
         # Inserire l'epoca e i pesi da cui ripartire
@@ -199,13 +210,14 @@ elif args.mode == 'test':
     # Load the weights
     model.load_weights(args.testweights)
 
+
     def evalds(part):
         dataset_test = Dataset(part, target_shape=INPUT_SHAPE, augment=False, preprocessing=args.preprocessing)
         print('Evaluating %s results...' % part)
         result = model.evaluate(dataset_test.get_data(), verbose=1, workers=4)
         print('%s results: loss %.3f - accuracy %.3f' % (part, result[0], result[1]))
 
-        #TODO: To be implemented: Saving .csv
+        # TODO: To be implemented: Saving .csv
 
 
     evalds('test')
