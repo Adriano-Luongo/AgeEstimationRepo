@@ -5,7 +5,7 @@ from keras.regularizers import l2
 import sys
 
 
-def senet_model_build(input_shape=(224, 224, 3), num_classes=1, weights="vggface"):
+def senet_model_build(input_shape=(224, 224, 3), num_classes=1, weights="imagenet"):
     print("Building senet", input_shape, "- num_classes", num_classes, "- weights", weights)
     sys.path.append('keras-squeeze-excite-network')
 
