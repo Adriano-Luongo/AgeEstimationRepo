@@ -12,7 +12,7 @@ parser.add_argument('--lpf', dest='lpf_size', type=int, choices=available_lpf, d
                     help='size of the lpf filter (1 means no filtering)')
 parser.add_argument('--cutout', action='store_true', help='use cutout augmentation')
 parser.add_argument('--weight_decay', type=float)
-parser.add_argument('--lr', default='0.001', help='Initial learning rate or init:factor:epochs', type=str)
+parser.add_argument('--lr', default='0.001', help='Initial learning rate or init:factor:epochs', type=str, dest='lr')
 parser.add_argument('--optimizer', default='adam', type=str, choices=available_optimizers)
 parser.add_argument('--momentum', action='store_true')
 parser.add_argument('--dataset', dest='dataset', type=str, default="vggface2_age",
