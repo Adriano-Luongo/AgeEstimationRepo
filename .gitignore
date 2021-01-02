@@ -1,0 +1,15 @@
+
+.idea/*
+.idea/modules.xml
+.idea/AgeEstimationRepo.iml
+.idea/inspectionProfiles/profiles_settings.xml
+training/__pycache__/dataset_tools.cpython-37.pyc
+venv/*
+tfrecords/train.age_detected-ids.png
+tfrecords/train.age_detected.csv
+tfrecords/train.age_detected.png
+tfrecords/train.reduced(random)-ids.png
+tfrecords/train.reduced(random).csv
+tfrecords/train.reduced(random).png
+tfrecords/valid.reduced(random)-ages.png
+tfrecords/valid.reduced(random).csv

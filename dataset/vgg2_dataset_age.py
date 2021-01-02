@@ -66,12 +66,10 @@ def read_tfrecord(record, labeled):
 def load_dataset(filenames, labeled=True):
     ignore_order = tf.data.Options()
     ignore_order.experimental_deterministic = False  # disable order, increase speed
-
     # Load the dataset from filenames
     dataset = tf.data.TFRecordDataset(
         filenames
     )  # automatically interleaves reads from multiple files
-
     dataset = dataset.with_options(
         ignore_order
     )  # uses data as soon as it streams in, rather than in its original order
@@ -80,7 +78,6 @@ def load_dataset(filenames, labeled=True):
     dataset = dataset.map(
         partial(read_tfrecord, labeled=labeled), num_parallel_calls=AUTOTUNE
     )
-
     # returns a dataset of (image, label) pairs if labeled=True or just images if labeled=False
     return dataset
 
@@ -104,7 +101,6 @@ class Vgg2DatasetAge:
         return self.batch_size
 
     def get_number_of_batches(self):
-        # print(f"Il numero di elementi è {str(self.size)} mentre la batch size è {str(self.batch_size)} quindi ho {str(floor(self.size/self.batch_size))}")
         return floor(self.size / self.batch_size)
 
     def get_size(self):
@@ -115,8 +111,11 @@ class Vgg2DatasetAge:
 
         def _apply_custom_preprocessing(tensor_image):
             image = np.asarray(tensor_image)
+
+            # VGGFACE2 dataset mean and deviation
             ds_means = np.array([91.4953, 103.8827, 131.0912])
             ds_stds = None
+
             image = np.asarray(image)
             image = mean_std_normalize(image, ds_means, ds_stds)
 
@@ -131,10 +130,8 @@ class Vgg2DatasetAge:
                 augmentation = custom_augmentation
 
             def augment(image):
-                image = np.asarray ( image )
-                image = augmentation.before_cut(image)
-                image = augmentation.after_cut(image)
-
+                image = np.asarray(image)
+                image = augmentation.augment(image)
                 return image
 
             return tf.cast(augment(tensor_image), tf.uint8)
@@ -161,7 +158,7 @@ class Vgg2DatasetAge:
             process_images = tf.keras.Sequential([
                 tf.keras.layers.Lambda(lambda x: tfio.experimental.color.rgb_to_bgr(x)),
                 tf.keras.layers.Lambda(lambda x: random_augmentation(x)),
-                #tf.keras.layers.Lambda(lambda x: data_preprocessing(x)),
+                tf.keras.layers.Lambda(lambda x: data_preprocessing(x)),
                 tf.keras.layers.Lambda(lambda x: resize_images(x))
             ])
             self.data = self.data.map(lambda x, y: (process_images(x), y),
@@ -252,7 +249,7 @@ class Vgg2DatasetAge:
 
         # Contiamo il numero di elementi nella partizione
         if load_partition.startswith('train'):
-            self.size = 600000
+            self.size = 100000
         elif load_partition.startswith('val'):
             self.size = 20000
         elif load_partition.startswith('test'):
@@ -266,8 +263,8 @@ class Vgg2DatasetAge:
 def main():
     dataset_utility = Vgg2DatasetAge('train', target_shape=(224, 224, 3), batch_size=4,
                                      preprocessing='full_normalization')
-    print(f"Il numero di elementi all'interno del dataset è {dataset_utility.get_size()}")
 
+    print(f"Il numero di elementi all'interno del dataset è {dataset_utility.get_size()}")
     # Nel caso di get_data
     j = 0
     data = dataset_utility.get_data()
@@ -278,7 +275,7 @@ def main():
             j += 1
             print(j)
             if j > 0 and j < 20:
-                print(j)
+
                 image = np.array(image)
                 plt.xlabel(cv2.mean(image))
                 plt.imshow(image)
