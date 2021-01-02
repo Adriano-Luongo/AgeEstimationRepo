@@ -127,7 +127,7 @@ accuracy_metrics = keras.metrics.mean_absolute_error
 
 # Scegliamo l'optimizer
 if args.optimizer == 'adam':
-    optimizer = keras.optimizers.Adam(lr=args.lr, beta1=0.9, beta2=0.999, epsilon=1e-08)
+    optimizer = keras.optimizers.Adam(lr=args.lr)
 else:
     optimizer = keras.optimizers.SGD(momentum=0.9) if args.momentum else 'sgd'
 
