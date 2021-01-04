@@ -86,7 +86,6 @@ def _load_vgg2(tfr_dir, partition, labeled):
     # Prendiamo tutti i file tfrecords e li posizioniamo in una lista
     tfr_dir = tfr_dir.replace("\\", "/")
     tfrecords_files = glob.glob(os.path.join(tfr_dir, f"{partition}.reduced(random)_*.tfrecord"))
-    tfrecords_files = '/home/simone/Desktop/Validation tfrecords/valid.reduced_dataset(random).tfrecord'
 
     # Creiamo l'oggetto dataset a partire dai file(s) tfrecord
     # Prendiamo la parte di dataset che è stata richiesta
