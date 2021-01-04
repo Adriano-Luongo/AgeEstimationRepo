@@ -221,8 +221,9 @@ elif args.mode == 'test':
         result = model.evaluate(dataset_test.get_data(), verbose=1, workers=4)
         print('%s results: loss %.3f - accuracy %.3f' % (part, result[0], result[1]))
 
-        # TODO: To be implemented: Saving .csv
-
+    def save_pred_to_csv():
+        dataset_test = Dataset('test', target_shape=INPUT_SHAPE, preprocessing=args.preprocessing)
+        labels = model.predict(dataset_test.get_data(), verbose= 1 , workers = 4 )
 
     evalds('test')
     evalds('val')

@@ -182,10 +182,13 @@ class Vgg2DatasetAge:
             self.data = self.data.map(lambda x: process_images(x),
                                       num_parallel_calls=AUTOTUNE)
 
-        self.data = self.data.shuffle(2048)
+        if self.labeled:
 
-        # Rendiamo il dataset ripetuto
-        self.data = self.data.repeat()
+            #Shuffle dei dati
+            self.data = self.data.shuffle ( 2048 )
+
+            # Rendiamo il dataset ripetuto
+            self.data = self.data.repeat()
 
         # Dividiamo il dataset in batches
         self.data = self.data.batch(batch_size=self.batch_size, drop_remainder=self.drop_remainder)
@@ -210,14 +213,17 @@ class Vgg2DatasetAge:
             load_partition = 'train'
             self.augment = True
             self.labeled = True
+            self.drop_remainder = True
         elif partition.startswith('val'):
             load_partition = 'val'
             self.augment = False
             self.labeled = True
+            self.drop_remainder = True
         elif partition.startswith('test'):
             load_partition = 'test'
             self.augment = False
             self.labeled = False
+            self.drop_remainder = False
         else:
             raise Exception("unknown partition")
 
@@ -228,7 +234,7 @@ class Vgg2DatasetAge:
         self.size = 0
         self.preprocessing = preprocessing
         # Impostarlo a True per eliminare l'ultimo batch che non ha un numero di samples pari a batch_size
-        self.drop_remainder = True
+
         print('Loading %s data...' % partition)
 
         # data_root punta a dataset/data
@@ -259,11 +265,11 @@ class Vgg2DatasetAge:
         print(f"Numero totale di immagini: {self.size}")
 
 
-'''
+
 # Testing
 def main():
-    dataset_utility = Vgg2DatasetAge('val', target_shape=(224, 224, 3), batch_size=4)
 
+    dataset_utility = Vgg2DatasetAge('test', target_shape=(224, 224, 3), batch_size=64)
     print(f"Il numero di elementi all'interno del dataset è {dataset_utility.get_size()}")
     # Nel caso di get_data
     j = 0
@@ -284,4 +290,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-'''
+
