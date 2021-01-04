@@ -4,6 +4,21 @@ from tensorflow.keras.layers import Conv2D, Flatten, Dense
 from keras.regularizers import l2
 import sys
 
+def vgg19_model_build(input_shape=(224, 224, 3), net="vgg19"):
+    sys.path.append('keras_vggface')
+    model = keras.applications.VGG19(include_top = False, weights='imagenet', input_shape=(224, 224, 3), classes=1)
+    hidden_dim = 512
+    for layer in model.layers[:-2]:
+        layer.trainable = False
+    features = model.layers[-2].output
+    x = Flatten(name='flatten')(features)
+    x = Dense(hidden_dim, activation='relu', kernel_regularizer=l2(l=0.01), bias_regularizer=l2(l=0.01), name='fc6')(x)
+    x = Dense(hidden_dim, activation='relu', kernel_regularizer=l2(l=0.01), bias_regularizer=l2(l=0.01), name='fc7')(x)
+    out = Dense(1, activation='linear', name='fc8')(x)
+    custom_vgg19_model = keras.Model(model.input, out)
+
+    return custom_vgg19_model, features
+
 
 def senet_model_build(input_shape=(224, 224, 3), num_classes=1, weights="imagenet"):
     print("Building senet", input_shape, "- num_classes", num_classes, "- weights", weights)
@@ -13,14 +28,14 @@ def senet_model_build(input_shape=(224, 224, 3), num_classes=1, weights="imagene
     m1 = SEResNet(weights=weights, input_shape=input_shape, include_top=True, pooling='avg', weight_decay=0)
     features = m1.layers[-2].output
     x = Flatten(name='flatten')(features)
-    x = Dense(512, activation='relu', kernel_regularizer=l2(l=0.01), bias_regularizer=l2(l=0.01), name='fc6')(x)
-    x = Dense(512, activation='relu', kernel_regularizer=l2(l=0.01), bias_regularizer=l2(l=0.01), name='fc7')(x)
+    x = Dense(4096, activation='relu', kernel_regularizer=l2(l=0.01), bias_regularizer=l2(l=0.01), name='fc6')(x)
+    x = Dense(4096, activation='relu', kernel_regularizer=l2(l=0.01), bias_regularizer=l2(l=0.01), name='fc7')(x)
     out = Dense(1, activation='linear', name='fc8')(x)
     model = keras.models.Model(m1.input, out)
+
     for l in model.layers:
         l.trainable = True
-    for l in model.layers[:-6]:
-        l.trainable = False
+
     return model, features
 
 

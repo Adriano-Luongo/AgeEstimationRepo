@@ -1,6 +1,6 @@
 import argparse
 
-available_nets = ['resnet50', 'senet50', 'vgg16']
+available_nets = ['resnet50', 'senet50', 'vgg16', 'vgg19']
 available_normalizations = ['full_normalization', 'vggface2']
 available_augmentations = ['default', 'vggface2', 'no']
 available_optimizers = ['sgd', 'adam']
@@ -55,7 +55,7 @@ from glob import glob
 import tensorflow as tf
 from tensorflow import keras
 from datetime import datetime
-from model_build import senet_model_build, vggface_custom_build, resnet_model_build
+from model_build import senet_model_build, vggface_custom_build, resnet_model_build, vgg19_model_build
 
 ## Specify the dataset we are going to use
 if args.dataset == 'vggface2_age':
@@ -100,8 +100,12 @@ def get_model():
         print("SENET Network")
         INPUT_SHAPE = (224, 224, 3)
         return senet_model_build(INPUT_SHAPE, args.pretraining)
+    elif args.net.startswith('vgg19'):
+        print("VGG19 Network")
+        INPUT_SHAPE = (224, 224, 3)
+        return vgg19_model_build(INPUT_SHAPE, args.pretraining)
     else:
-        print("VGGFACE Network")
+        print("VGG16 Network")
         INPUT_SHAPE = (224, 224, 3)
         return vggface_custom_build(INPUT_SHAPE, args.pretraining, args.net)
 

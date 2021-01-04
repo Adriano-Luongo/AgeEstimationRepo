@@ -86,6 +86,7 @@ def _load_vgg2(tfr_dir, partition, labeled):
     # Prendiamo tutti i file tfrecords e li posizioniamo in una lista
     tfr_dir = tfr_dir.replace("\\", "/")
     tfrecords_files = glob.glob(os.path.join(tfr_dir, f"{partition}.reduced(random)_*.tfrecord"))
+    tfrecords_files = '/home/simone/Desktop/Validation tfrecords/valid.reduced_dataset(random).tfrecord'
 
     # Creiamo l'oggetto dataset a partire dai file(s) tfrecord
     # Prendiamo la parte di dataset che è stata richiesta
@@ -259,31 +260,29 @@ class Vgg2DatasetAge:
         print(f"Numero totale di immagini: {self.size}")
 
 
+'''
 # Testing
 def main():
-    dataset_utility = Vgg2DatasetAge('train', target_shape=(224, 224, 3), batch_size=4,
-                                     preprocessing='full_normalization')
+    dataset_utility = Vgg2DatasetAge('val', target_shape=(224, 224, 3), batch_size=4)
 
     print(f"Il numero di elementi all'interno del dataset è {dataset_utility.get_size()}")
     # Nel caso di get_data
     j = 0
     data = dataset_utility.get_data()
 
-    for record in data:
-        images, ages = record
-        for image in images:
-            j += 1
-            print(j)
-            if j > 0 and j < 20:
-
-                image = np.array(image)
-                plt.xlabel(cv2.mean(image))
-                plt.imshow(image)
-                print("minimo: " + str(image.min()))
-                plt.show()
-
-    print(j)
+    for i in range (0,100):
+        for record in data:
+            images, ages = record
+            for image in images:
+                if j % 20000 == 0:
+                    image = np.array(image)
+                    plt.xlabel(cv2.mean(image))
+                    plt.imshow(image)
+                    plt.show()
+                    print(j)
+                j += 1
 
 
 if __name__ == '__main__':
     main()
+'''
