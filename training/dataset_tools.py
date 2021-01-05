@@ -84,7 +84,6 @@ def random_brightness_contrast(img):
     b = _random_normal_crop(1, 48)[0]
     img = (img - 128.0) * a + 128.0 + b
     img = np.clip(img, 0, 255)
-    img = img.astype(np.uint8)
     return img
 
 
@@ -120,7 +119,7 @@ def random_image_rotate(img, rotation_center):
     nimg = cv2.warpAffine(img, M, dsize=img.shape[0:2], borderMode=cv2.BORDER_REPLICATE)
     if len(nimg.shape) < 3:
         nimg = nimg[:, :, np.newaxis]
-    return nimg  # .reshape(img.shape)
+    return nimg
 
 
 def random_image_skew(img):
@@ -129,7 +128,7 @@ def random_image_skew(img):
     nimg = cv2.warpAffine(img, M, dsize=img.shape[0:2], borderMode=cv2.BORDER_REPLICATE)
     if len(nimg.shape) < 3:
         nimg = nimg[:, :, np.newaxis]
-    return nimg  # .reshape(img.shape)
+    return nimg
 
 
 class VGGFace2Augmentation:
