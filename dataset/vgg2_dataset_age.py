@@ -122,7 +122,6 @@ class Vgg2DatasetAge:
             return image
 
         def _apply_custom_augmentation(tensor_image):
-
             custom_augmentation = self.custom_augmentation
             if custom_augmentation is None:
                 augmentation = DefaultAugmentation ()
@@ -133,23 +132,22 @@ class Vgg2DatasetAge:
                 image = np.asarray ( image )
                 image = augmentation.augment ( image )
                 return image
-
             return augment ( tensor_image )
 
         def random_augmentation(image):
             im_shape = image.shape
-            [image, ] = tf.py_function ( _apply_custom_augmentation, [image], [tf.int8] )
+            [image, ] = tf.py_function ( _apply_custom_augmentation, [image], [tf.uint8] )
             image.set_shape ( im_shape )
             return image
 
         def data_preprocessing(image):
             im_shape = image.shape
-            [image, ] = tf.py_function ( _apply_custom_preprocessing, [image], [tf.int8] )
+            [image, ] = tf.py_function ( _apply_custom_preprocessing, [image], [tf.int16] )
             image.set_shape ( im_shape )
             return image
 
         def resize_images(image):
-            image =  tf.image.resize ( image, self.target_shape )
+            image =  tf.cast(tf.image.resize ( image, self.target_shape ), tf.int16)
             return image
 
         # Labeled and augment only for the training set
