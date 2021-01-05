@@ -134,22 +134,22 @@ class Vgg2DatasetAge:
                 image = augmentation.augment ( image )
                 return image
 
-            return augment ( tensor_image ).astype ( np.uint8 )
+            return augment ( tensor_image )
 
         def random_augmentation(image):
             im_shape = image.shape
-            [image, ] = tf.py_function ( _apply_custom_augmentation, [image], [tf.uint8] )
+            [image, ] = tf.py_function ( _apply_custom_augmentation, [image], [tf.int8] )
             image.set_shape ( im_shape )
             return image
 
         def data_preprocessing(image):
             im_shape = image.shape
-            [image, ] = tf.py_function ( _apply_custom_preprocessing, [image], [tf.uint8] )
+            [image, ] = tf.py_function ( _apply_custom_preprocessing, [image], [tf.int8] )
             image.set_shape ( im_shape )
             return image
 
         def resize_images(image):
-            image = tf.cast ( tf.image.resize ( image, self.target_shape ), tf.uint8 )
+            image =  tf.image.resize ( image, self.target_shape )
             return image
 
         # Labeled and augment only for the training set
@@ -182,7 +182,7 @@ class Vgg2DatasetAge:
             self.data = self.data.map ( lambda x: process_images ( x ),
                                         num_parallel_calls=AUTOTUNE )
 
-        self.data = self.data.shuffle ( 2048 )
+        self.data = self.data.shuffle ( 2048, reshuffle_each_iteration=True)
 
         # Rendiamo il dataset ripetuto
         self.data = self.data.repeat ()
