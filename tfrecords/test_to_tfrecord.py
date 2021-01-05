@@ -4,14 +4,13 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 from tqdm import tqdm
 import tensorflow as tf
-import pandas as pd
+import glob
 import cv2
-import os
 
 from dataset.face_detector import FaceDetector, findRelevantFace
 from image_cut_tool import enclosing_square, add_margin, cut
 
-
+import matplotlib.pyplot as plt
 
 
 FACE_DETECTOR = None
@@ -42,7 +41,7 @@ def image_example(image, path, height, width):
     feature = {
         'height': _int64_feature(height),
         'width': _int64_feature(width),
-        'path': _bytes_feature(path.tobytes()),
+        'path': _bytes_feature(path.encode('utf-8')),
         'image_raw': _bytes_feature(image.tobytes())
     }
     return tf.train.Example(features=tf.train.Features(feature=feature))
@@ -88,15 +87,19 @@ def extract_face(image_path):
 
 def create_tfrecord():
     # Get CSV file to read the ages
-    test_tfrecord_file = "C:/Users/Adria/OneDrive/Desktop/test.tfrecord"
+    test_tfrecord_file = "D:/tfrecord_test/test.tfrecord"
     images_folder = "C:/Users/Adria/OneDrive/Desktop/test_images/test"
     images_path = glob.glob(images_folder+"/*/*.jpg")
     # Write the dataset in the file
+
     with tf.io.TFRecordWriter(test_tfrecord_file) as writer:
 
         for image_path in tqdm(images_path):
             # Extract the face within a rectangle
-            image = extract_face(image_path, index)
+
+            image = extract_face(image_path)
+            image_path = image_path.replace ( "\\", "/" )
+            image_path = image_path.replace("C:/Users/Adria/OneDrive/Desktop/test_images/test/","")
             # Read image and save it in the tfrecord file
             tf_example = image_example(image, image_path , image.shape[0], image.shape[1])
             writer.write(tf_example.SerializeToString())

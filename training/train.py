@@ -55,6 +55,8 @@ from glob import glob
 import tensorflow as tf
 from tensorflow import keras
 from datetime import datetime
+import tqdm
+import pandas as pd
 from model_build import senet_model_build, vggface_custom_build, resnet_model_build, vgg19_model_build
 
 ## Specify the dataset we are going to use
@@ -213,7 +215,7 @@ if args.mode.startswith('train'):
 elif args.mode == 'test':
     # Load the weights
     model.load_weights(args.testweights)
-
+    path_of_csv = ""
 
     def evalds(part):
         dataset_test = Dataset(part, target_shape=INPUT_SHAPE, augment=False, preprocessing=args.preprocessing)
@@ -223,7 +225,16 @@ elif args.mode == 'test':
 
     def save_pred_to_csv():
         dataset_test = Dataset('test', target_shape=INPUT_SHAPE, preprocessing=args.preprocessing)
-        labels = model.predict(dataset_test.get_data(), verbose= 1 , workers = 4 )
+        test_data = dataset_test.get_data()
+        data_tfrecord = pd.DataFrame()
+        for image, path in tqdm(test_data):
+            label = model.predict(image, verbose= 1 , workers = 4 )
+            row = path + "," + round(label)
+            data_tfrecord.append(row, ignore_index=True)
+        data_tfrecord.to_csv(path_of_csv)
+
+
+
 
     evalds('test')
     evalds('val')

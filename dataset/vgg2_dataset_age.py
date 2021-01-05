@@ -35,6 +35,7 @@ def read_tfrecord(record, labeled):
         else {
             'height': tf.io.FixedLenFeature([], tf.int64),
             'width': tf.io.FixedLenFeature([], tf.int64),
+            'path' : tf.io.FixedLenFeature([], tf.string),
             'image_raw': tf.io.FixedLenFeature([], tf.string),
         }
     )
@@ -60,7 +61,8 @@ def read_tfrecord(record, labeled):
         label = parsed_record['label']
         return image, label
     else:
-        return image
+        path = parsed_record['path']
+        return image, path
 
 
 def load_dataset(filenames, labeled=True):
@@ -182,16 +184,17 @@ class Vgg2DatasetAge:
                 tf.keras.layers.Lambda(lambda x: data_preprocessing(x)),
                 tf.keras.layers.Lambda(lambda x: resize_images(x))
             ])
-            self.data = self.data.map(lambda x: process_images(x),
+            self.data = self.data.map(lambda x, y: (process_images(x) , y),
                                       num_parallel_calls=AUTOTUNE)
 
 
+        if self.labeled:
+            # Rendiamo il dataset ripetuto
+            self.data = self.data.repeat()
 
-        # Rendiamo il dataset ripetuto
-        # self.data = self.data.repeat()
+            # Dividiamo il dataset in batches
+            self.data = self.data.batch ( batch_size=self.batch_size, drop_remainder=self.drop_remainder )
 
-        # Dividiamo il dataset in batches
-        self.data = self.data.batch(batch_size=self.batch_size, drop_remainder=self.drop_remainder)
 
         # Come da documentazione la pipeline di trasformazione dovrebbe terminare con prefetch
         # questo permette di caricare in maniera preventiva i dati necessari alla rete nel prossimo step
