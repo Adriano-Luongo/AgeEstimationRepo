@@ -18,6 +18,7 @@ Dal momento che il modello della rete superava le dimensioni massime consentite 
 Per l'allenamento abbiamo studiato il codice offerto dal framework presente a  https://github.com/MiviaLab e l'abbiamo modificato per adattarlo alle nostre esigenze.
 In particolare, per effettuare l'allenamento in maniera rapida si è scelto di rappresentare il dataset mediante l'utilizzo dei TFrecords e di utilizzare tali dati tramite l'API di Tensorflow. Per questo motivo, è necessario avere a disposizione, per effettuare l'allenamento il dataset in tale formato e dividerlo, come indicato dal codice, tra le cartelle (train,val,test) in /dataset/data/vggface2_data . La convenzione sui nomi dei tfrecord segue questa espressione: <partition>.reduced(random)_*.tfrecord per permettere l'utilizzo di più file tfrecord.
 Di seguito sono posti i link per il download dei file tfrecords da noi utilizzati.
+
 Train:
 1) https://drive.google.com/file/d/1u5In7vy-SgLMJvAjZG1lIJCTzvUX6QQE/view?usp=sharing
 2) https://drive.google.com/file/d/1kLLdQfdV7qKHgNQSJtOubK0m7MbKqWJf/view?usp=sharing
