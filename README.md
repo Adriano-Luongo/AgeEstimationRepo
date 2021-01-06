@@ -13,8 +13,8 @@ Carmen Fucile c.fucile@studenti.unisa.it
 
 In particolare il seguente README fornisce le indicazioni richieste quali
 
-- Il codice usato per allenare la rete e istruzioni per riprodurre l'esperimento
-- Il codice usato per testare la rete e istruzioni per riprodurre l'esperimento
+- istruzioni per riprodurre l'allenamento
+- istruzioni per riprodurre il test
 
 Dal momento che il modello della rete superava le dimensioni massime consentite da GitHub quest'ultimo è stato caricato al seguente link drive:
 *TODO:LINKDRIVEPESI*
