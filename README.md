@@ -2,10 +2,15 @@
 
 Questa repository contiene il codice relativo al documento "Contest di visione artificiale - Gruppo 12"
 I partecipanti sono:
+
 Adriano Luongo  a.luongo45@studenti.unisa.it
+
 Simone Cristofaro s.cristofaro3@studenti.unisa.it
+
 Elena Guzzo e.guzzo6@studenti.unisa.it
+
 Carmen Fucile c.fucile@studenti.unisa.it
+
 In particolare il seguente README fornisce le indicazioni richieste quali
 
 - Il codice usato per allenare la rete e istruzioni per riprodurre l'esperimento
