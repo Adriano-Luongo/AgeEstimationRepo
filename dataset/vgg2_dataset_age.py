@@ -158,7 +158,7 @@ class Vgg2DatasetAge:
         # Labeled and augment only for the training set
         if self.labeled and self.augment:
             # Training set
-            print("Training set preprocessing layer")
+            print("preprocessing + augmentation layers")
             process_images = tf.keras.Sequential([
                 tf.keras.layers.Lambda(lambda x: tfio.experimental.color.rgb_to_bgr(x)),
                 tf.keras.layers.Lambda(lambda x: random_augmentation(x)),
@@ -167,19 +167,9 @@ class Vgg2DatasetAge:
             ])
             self.data = self.data.map(lambda x, y: (process_images(x), y),
                                       num_parallel_calls=AUTOTUNE)
-        elif self.labeled:
-            # Validation set
-            print("Validation set preprocessing layer")
-            process_images = tf.keras.Sequential([
-                tf.keras.layers.Lambda(lambda x: tfio.experimental.color.rgb_to_bgr(x)),
-                tf.keras.layers.Lambda(lambda x: data_preprocessing(x)),
-                tf.keras.layers.Lambda(lambda x: resize_images(x))
-            ])
-            self.data = self.data.map(lambda x, y: (process_images(x), y),
-                                      num_parallel_calls=AUTOTUNE)
         else:
-            # Test set
-            print("Test set preprocessing layer")
+            # Validation and test set
+            print("preprocessing layers")
             process_images = tf.keras.Sequential([
                 tf.keras.layers.Lambda(lambda x: tfio.experimental.color.rgb_to_bgr(x)),
                 tf.keras.layers.Lambda(lambda x: data_preprocessing(x)),
