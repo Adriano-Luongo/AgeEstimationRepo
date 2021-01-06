@@ -41,6 +41,7 @@ parser.add_argument('--pretraining', type=str, default='vggface',
 parser.add_argument('--preprocessing', type=str, default='vggface2', choices=available_normalizations)
 parser.add_argument('--augmentation', type=str, default='default', choices=available_augmentations)
 parser.add_argument('--testweights', type=str, default=None, help='Path to the weights for testing')
+parser.add_argument('--path_csv', type=str, default=None, help='Where to save the csv with the test predictions')
 
 args = parser.parse_args()
 
@@ -51,13 +52,9 @@ warnings.filterwarnings('ignore', category=FutureWarning)
 import sys
 import os
 import numpy as np
-from glob import glob
-import tensorflow as tf
 from tensorflow import keras
 from datetime import datetime
-import tqdm
 import pandas as pd
-import matplotlib.pyplot as plt
 from model_build import senet_model_build, vggface_custom_build, resnet_model_build, vgg19_model_build
 
 ## Specify the dataset we are going to use
@@ -91,8 +88,6 @@ def step_decay_schedule(initial_lr, decay_factor, step_size):
 
 # Model building
 INPUT_SHAPE = None
-
-
 def get_model():
     global INPUT_SHAPE
     if args.net.startswith('resnet'):
@@ -124,7 +119,7 @@ model, feature_layer = get_model()
 # Print the model to look if everything was made correctly
 model.summary()
 
-# Se abbiamo scelto di usare il weight_decay allora viene impostato sui layer corretti
+# Weight decay if specified
 if args.weight_decay:
     weight_decay = args.weight_decay  # 0.0005
     for layer in model.layers:
@@ -134,49 +129,50 @@ if args.weight_decay:
         if hasattr(layer, 'bias_regularizer') and layer.use_bias:
             layer.add_loss(keras.regularizers.l2(weight_decay)(layer.bias))
 
-# Scegliamo la funzione di loss e la metrica per valutare l'accuratezza del modello
+
+# Set the loss function and accuracy_metric
 loss = 'mean_squared_error'
 accuracy_metrics = keras.metrics.mean_absolute_error
 
-# Scegliamo l'optimizer
+# Set the optimizer
 if args.optimizer == 'adam':
     optimizer = keras.optimizers.Adam(lr=args.lr)
 else:
     optimizer = keras.optimizers.SGD(momentum=0.9) if args.momentum else 'sgd'
 
-# Compiliamo il modello
+# Compile the model with previous informations
 model.compile(loss=loss, optimizer=optimizer, metrics=accuracy_metrics)
 
-# Creazione della directory in cui salvare i pesi dell'allenamento corrente e i grafi di TensorBoard
-datetime = datetime.today().strftime('%Y%m%d_%H%M%S')  # prendiamo la data e l'ora attuale
-dirname = "train_results_of_" + datetime  # Nome della directory fino al cambio del TODO
+# Here we build base path in which we are saving our weights and tensorBoard informations
+datetime = datetime.today().strftime('%Y%m%d_%H%M%S')
+dirname = "train_results_of_" + datetime
 dirname = os.path.join(args.base_path, dirname)
 if not os.path.isdir(dirname):
     os.makedirs(dirname)
 
-# Creazione sotto-directory per i pesi
+# Subdirectory for weights
 filepath = os.path.join(dirname, "weights")
 if not os.path.isdir(filepath):
     os.makedirs(filepath)  # Questa è la directory in cui viene salvato il file dei pesi
-# Nome del file dei pesi
+# Name of the weight files, it depends from the epoch
 weight_file_name = os.path.join(filepath, "checkpoint.{epoch:02d}.hdf5")
 
-# Creazione sotto-directory per tensorBoard
+# Subdirectory for TensorBoard
 tensor_board_directory = os.path.join(dirname, "tensorBoard")
 if not os.path.isdir(filepath):
     os.makedirs(tensor_board_directory)  # Questa è la directory in cui vengono salvati i file per Tensor Board per noi.
 
-# AUGMENTATION
+# Select the chosen augmentation
 if args.augmentation == 'vggface2':
     from dataset_tools import VGGFace2Augmentation
-
     custom_augmentation = VGGFace2Augmentation()
 
 else:  # default
     from dataset_tools import DefaultAugmentation
-
     custom_augmentation = DefaultAugmentation()
 
+
+#If we are training our network
 if args.mode.startswith('train'):
     print("TRAINING %s" % dirname)
     dataset_training = Dataset('train', target_shape=INPUT_SHAPE, batch_size=batch_size,
@@ -184,19 +180,19 @@ if args.mode.startswith('train'):
     dataset_validation = Dataset('val', target_shape=INPUT_SHAPE, batch_size=batch_size,
                                  preprocessing=args.preprocessing)
 
-    # Specifichiamo la variabile da tenere sotto controllo in fase di allenamento per salvare un CheckPoint
+    # Here we specify all the callbacks that will be called during training.
     monitor = 'val_loss'
     checkpoint = keras.callbacks.ModelCheckpoint(weight_file_name, verbose=1, save_best_only=True, monitor=monitor)
     tbCallBack = keras.callbacks.TensorBoard(log_dir=tensor_board_directory, write_graph=True, write_images=True)
     callbacks_list = [checkpoint, tbCallBack]
 
-    # Creiamo lo scheduler da dare alla funzione di training
+    # In case we set up a learning rate scheduler we add it to the callbacks list
     if args.lr_sched is not None and ':' in args.lr_sched:
         lr_sched = step_decay_schedule()
         callbacks_list = [checkpoint, tbCallBack, lr_sched]
 
+    # Used to start the training from a checkpoint
     if args.resume:
-        # Inserire l'epoca e i pesi da cui ripartire
         resume_path = args.resumepath
         initial_epoch = int(resume_path[-7:-5])
         print(f'Resuming from epoch {initial_epoch}')
@@ -204,21 +200,20 @@ if args.mode.startswith('train'):
     else:
         initial_epoch = 0
 
-    print(dataset_training.get_size())
-
     model.fit(dataset_training.get_data(), validation_data=dataset_validation.get_data(),
               validation_steps=dataset_validation.get_number_of_batches(),
               verbose=1, callbacks=callbacks_list, steps_per_epoch=dataset_training.get_number_of_batches(),
               epochs=n_training_epochs, workers=8,
               initial_epoch=initial_epoch)
 
-
+#If we want to create the csv for test
 elif args.mode == 'test':
     # Load the weights
+    model.load_weights(args.testweights)
+    path_of_csv = args.path_to_csv
 
-    model.load_weights("E:/Downloads/checkpoint.06.hdf5")
-    path_of_csv = "C:/Users/Heisenberg/Desktop/ProgettoAV/AgeEstimationRepo/dataset/data/vggface2_data/test/predict.csv"
-
+    if path_of_csv is None:
+        print("Please specify a path where to save the csv file")
 
     def save_pred_to_csv():
         dataset_test = Dataset('test', target_shape=INPUT_SHAPE, batch_size=batch_size, preprocessing=args.preprocessing)
@@ -242,7 +237,11 @@ elif args.mode == 'test':
         print("Salvataggio del predict csv...")
         data_tfrecord.to_csv(path_of_csv, index=False)
 
-
+    #Actually call the function to start the prediction and saving on csv
     save_pred_to_csv()
 
-# python train.py --net resnet50 --augmentation default --preprocessing vggface2 --batch 128 --dir $saves_dir --mode "test"
+else:
+    print("Unknow operational mode.")
+    exit(1)
+
+

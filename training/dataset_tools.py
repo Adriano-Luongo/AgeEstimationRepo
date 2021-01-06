@@ -92,11 +92,6 @@ def random_saturation(image, label):
     return (image, label)
 
 
-def flip_up_down_random(image, label):
-    image = tf.image.flip_up_down(image)
-    return (image, label)
-
-
 def random_flip(img):
     # flip
     if random.randint(0, 1):

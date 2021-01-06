@@ -21,9 +21,9 @@ DATA_DIR = "data"
 
 VGGFACE2_MEANS = np.array([131.0912, 103.8827, 91.4953])  # RGB
 
-
+#This function is called after reading the Tfrecord file. Parses the binary record into a predifined structure
 def read_tfrecord(record, labeled):
-    # Per ogni record all'interno del dataset eseguiamo questa funzione
+
     tfrecord_format = (
         {
             'height': tf.io.FixedLenFeature([], tf.int64),
@@ -32,6 +32,8 @@ def read_tfrecord(record, labeled):
             'image_raw': tf.io.FixedLenFeature([], tf.string),
         }
         if labeled
+        #In case we are testing, the tfrecord file does not contain any label,
+        # it actually contains the path to the iamge
         else {
             'height': tf.io.FixedLenFeature([], tf.int64),
             'width': tf.io.FixedLenFeature([], tf.int64),
@@ -39,22 +41,21 @@ def read_tfrecord(record, labeled):
             'image_raw': tf.io.FixedLenFeature([], tf.string),
         }
     )
-    # Prima parsiamo il record secondo la struttura usata per convertirlo inizialemente
+
+    # First we parse the record into the structure above
     parsed_record = tf.io.parse_single_example(record, tfrecord_format)
 
-    # Una volta parsato procediamo con prelevare i singoli campi
-    # Iniziamo con il prelevare l'immagine in byte e convertirla in un immagine formato uint8
+    # We extract the raw image from the parsed record into a uint8 format
     image = tf.io.decode_raw(parsed_record['image_raw'], tf.uint8)
-    # print ( f"Il numero totale degli elementi dell'immagine decodificata è {len ( image )}" )
 
-    # Preleviamo altezza e larghezza per effettuare il resize dell'immagine
+    # Pick the height and width parameters to reshape the image as its previous shape
     width = parsed_record['width']
     height = parsed_record['height']
 
-    # Prese altezza e larghezza rimodelliamo l'immagine
+    #Reshape of the image
     image = tf.reshape(image, (height, width, 3))
 
-    # Ritorniamo le informazioni necessarie
+    # Return (image,label) or (image, path) depending on the fact that is trianing,validation or test
     if labeled:
         label = parsed_record['label']
         return image, label
@@ -64,6 +65,7 @@ def read_tfrecord(record, labeled):
 
 
 def load_dataset(filenames, labeled=True):
+
     # Load the dataset from filenames
     dataset = tf.data.TFRecordDataset(filenames)
 
@@ -74,21 +76,21 @@ def load_dataset(filenames, labeled=True):
         dataset = dataset.with_options(ignore_order)
         # uses data as soon as it streams in, rather than in its original order
 
-    # Converte il dataset da un formato grezzo a coppie (immagine, età) per poi essere dato al model.fit
+    # Calls the read_tfrecord function on every element in dataset in an efficient way
     dataset = dataset.map(
         partial(read_tfrecord, labeled=labeled), num_parallel_calls=AUTOTUNE
     )
-    # returns a dataset of (image, label) pairs if labeled=True or just images if labeled=False
+    # returns a dataset of (image, label) pairs if labeled=True or (images,path) if labeled=False
     return dataset
 
 
 def _load_vgg2(tfr_dir, partition, labeled):
-    # Prendiamo tutti i file tfrecords e li posizioniamo in una lista
+
+    # Depending on the partition we are selecting we glob every file inside the partition folder
     tfr_dir = tfr_dir.replace("\\", "/")
     tfrecords_files = glob.glob(os.path.join(tfr_dir, f"{partition}.reduced(random)_*.tfrecord"))
 
-    # Creiamo l'oggetto dataset a partire dai file(s) tfrecord
-    # Prendiamo la parte di dataset che è stata richiesta
+    #We check if we have to handle validation/training data or test data to parse it properly
     if not labeled:
         return load_dataset(tfrecords_files, False)
     else:
@@ -107,20 +109,22 @@ class Vgg2DatasetAge:
         return self.size
 
     def get_data(self):
-        # Shuffle del dataset
+
 
         def _apply_custom_preprocessing(tensor_image):
-            image = np.asarray(tensor_image)
 
-            # VGGFACE2 dataset mean and deviation
+            image = np.asarray(tensor_image)
+            # VGGFACE2 dataset mean and deviation in BGR format
             ds_means = np.array([91.4953, 103.8827, 131.0912])
             ds_stds = None
 
             image = np.asarray(image)
             image = mean_std_normalize(image, ds_means, ds_stds)
+
             return image
 
         def _apply_custom_augmentation(tensor_image):
+
             custom_augmentation = self.custom_augmentation
             if custom_augmentation is None:
                 augmentation = DefaultAugmentation()
@@ -134,6 +138,7 @@ class Vgg2DatasetAge:
 
             return augment(tensor_image)
 
+        #Wrapper functions to handle tensors as eagertensors
         def random_augmentation(image):
             im_shape = image.shape
             [image, ] = tf.py_function(_apply_custom_augmentation, [image], [tf.uint8])
@@ -162,7 +167,6 @@ class Vgg2DatasetAge:
             ])
             self.data = self.data.map(lambda x, y: (process_images(x), y),
                                       num_parallel_calls=AUTOTUNE)
-            self.data = self.data.shuffle(2048, reshuffle_each_iteration=True)
         elif self.labeled:
             # Validation set
             print("Validation set preprocessing layer")
@@ -173,7 +177,6 @@ class Vgg2DatasetAge:
             ])
             self.data = self.data.map(lambda x, y: (process_images(x), y),
                                       num_parallel_calls=AUTOTUNE)
-            self.data = self.data.shuffle(2048, reshuffle_each_iteration=True)
         else:
             # Test set
             print("Test set preprocessing layer")
@@ -188,14 +191,15 @@ class Vgg2DatasetAge:
         if self.labeled:
             # Rendiamo il dataset ripetuto
             self.data = self.data.repeat()
+            # Shuffle the data
+            self.data = self.data.shuffle(2048, reshuffle_each_iteration=True)
 
-        # Dividiamo il dataset in batches
+        # Divide data into batches of the desired size
         self.data = self.data.batch(batch_size=self.batch_size, drop_remainder=self.drop_remainder)
 
-        # Come da documentazione la pipeline di trasformazione dovrebbe terminare con prefetch
-        # questo permette di caricare in maniera preventiva i dati necessari alla rete nel prossimo step
-        # si consiglia un buffersize pari almeno a un batch_size
-        # Use buffered prefecting on all datasets
+        #As specified in documentation the input pipeline should end with a prefetch operation, this serves to
+        # prefetch batches before actually required increasing the speed of all the operations that require getting
+        # batches of data.
         self.data = self.data.prefetch(buffer_size=AUTOTUNE)
 
         return self.data
@@ -232,23 +236,20 @@ class Vgg2DatasetAge:
 
         self.size = 0
         self.preprocessing = preprocessing
-        # Impostarlo a True per eliminare l'ultimo batch che non ha un numero di samples pari a batch_size
+
 
         print('Loading %s data...' % partition)
 
-        # data_root punta a dataset/data
+        # data_root directs to dataset/data
         data_root = os.path.join(EXT_ROOT, DATA_DIR)
 
-        # convertiamo dalla directory generica alla partizione particolare
-        # vggface2_data/<part>
+        # Convert from vggface2_data/<part> to the specific partition
         data_dir = data_dir.replace('<part>', load_partition)
-
-        # specifichiamo il path dove si trova il tfrecord relativo alla  partizione
         tfr_partition_dir = os.path.join(data_root, data_dir)
 
-        # Apriamo ogni singolo file presente all'interno della cartella e ne preleviamo il contenuto
+        # here we load the dataset required, every element is a tuple (image, age) (image,path) depending
+        # on the required partition
         self.data = _load_vgg2(tfr_partition_dir, load_partition, self.labeled)
-        # Data è un insieme di coppie (image, label)
 
         print(f"Caricamento del dataset da {tfr_partition_dir}")
 
@@ -258,12 +259,9 @@ class Vgg2DatasetAge:
         elif load_partition.startswith('val'):
             self.size = 20000
         elif load_partition.startswith('test'):
-            self.size = 20000
-            # TODO: RIMUOVI
-            ''' 
            for _ in self.data:
                 self.size = self.size + 1
-            '''
+
         print(f"Numero totale di immagini: {self.size}")
 
 
@@ -271,7 +269,6 @@ class Vgg2DatasetAge:
 def main():
     dataset_utility = Vgg2DatasetAge('test', target_shape=(224, 224, 3), batch_size=4,
                                      preprocessing='no')
-    # Nel caso di get_data
     j = 0
     data = dataset_utility.get_data()
 
