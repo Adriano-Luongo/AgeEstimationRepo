@@ -69,7 +69,7 @@ La batch size è impostata per decidere il numero di elementi da dare alla rete 
 ## Fonti esterne
 Il codice all'interno della repository ha fatto utilizzo di codice presente in queste repository:
 * VGGFace: https://github.com/rcmalli/keras-vggface
-* BaseFramework: https://github.com/MiviaLab
+* BaseFramework: https://github.com/MiviaLab/GenderRecognitionFramework
 
 
 
