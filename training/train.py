@@ -57,6 +57,7 @@ from tensorflow import keras
 from datetime import datetime
 import tqdm
 import pandas as pd
+import matplotlib.pyplot as plt
 from model_build import senet_model_build, vggface_custom_build, resnet_model_build, vgg19_model_build
 
 ## Specify the dataset we are going to use
@@ -214,28 +215,34 @@ if args.mode.startswith('train'):
 
 elif args.mode == 'test':
     # Load the weights
-    model.load_weights(args.testweights)
-    path_of_csv = ""
 
-    def evalds(part):
-        dataset_test = Dataset(part, target_shape=INPUT_SHAPE, augment=False, preprocessing=args.preprocessing)
-        print('Evaluating %s results...' % part)
-        result = model.evaluate(dataset_test.get_data(), verbose=1, workers=4)
-        print('%s results: loss %.3f - accuracy %.3f' % (part, result[0], result[1]))
+    model.load_weights("E:/Downloads/checkpoint.06.hdf5")
+    path_of_csv = "C:/Users/Heisenberg/Desktop/ProgettoAV/AgeEstimationRepo/dataset/data/vggface2_data/test/predict.csv"
+
 
     def save_pred_to_csv():
-        dataset_test = Dataset('test', target_shape=INPUT_SHAPE, preprocessing=args.preprocessing)
+        dataset_test = Dataset('test', target_shape=INPUT_SHAPE, batch_size=batch_size, preprocessing=args.preprocessing)
+        print("Batchsize: "+ str(dataset_test.get_batch_size()))
+
         test_data = dataset_test.get_data()
-        data_tfrecord = pd.DataFrame()
-        for image, path in tqdm(test_data):
-            label = model.predict(image, verbose= 1 , workers = 4 )
-            row = path + "," + round(label)
-            data_tfrecord.append(row, ignore_index=True)
-        data_tfrecord.to_csv(path_of_csv)
+        data_tfrecord = pd.DataFrame(columns=['path', 'age'])
+        j = 0
+        for batch in test_data:
+            images, paths = batch
+            predicted_ages = model.predict(images, verbose=1, workers=4, batch_size=batch_size)
+            for i in range(len(predicted_ages)):
+                path = paths[i].numpy().decode('ascii')
+                age = str(round(int(predicted_ages[i][0])))
+                data_tfrecord = data_tfrecord.append({
+                    'path': path,
+                    'age': age
+                }, ignore_index=True)
 
 
+        print("Salvataggio del predict csv...")
+        data_tfrecord.to_csv(path_of_csv, index=False)
 
 
-    evalds('test')
-    evalds('val')
-    evalds('train')
+    save_pred_to_csv()
+
+# python train.py --net resnet50 --augmentation default --preprocessing vggface2 --batch 128 --dir $saves_dir --mode "test"

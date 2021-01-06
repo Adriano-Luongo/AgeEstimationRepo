@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import warnings
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 from tqdm import tqdm
@@ -12,11 +13,10 @@ from image_cut_tool import enclosing_square, add_margin, cut
 
 import matplotlib.pyplot as plt
 
-
 FACE_DETECTOR = None
 
-discarded = 0   # Images that could not be read
-non_cut = 0     # Images where no face could be detected
+discarded = 0  # Images that could not be read
+non_cut = 0  # Images where no face could be detected
 
 
 def _bytes_feature(value):
@@ -85,26 +85,27 @@ def extract_face(image_path):
         return None
     return image
 
+
 def create_tfrecord():
     # Get CSV file to read the ages
-    test_tfrecord_file = "D:/tfrecord_test/test.tfrecord"
-    images_folder = "C:/Users/Adria/OneDrive/Desktop/test_images/test"
-    images_path = glob.glob(images_folder+"/*/*.jpg")
+    test_tfrecord_file = "C:/Users/Heisenberg/Desktop/ProgettoAV/AgeEstimationRepo/dataset/data/vggface2_data/test/test.reduced(random)_2.tfrecord"
+    images_folder = "C:/Users/Heisenberg/Desktop/test"
+    #images_folder = "E:/Immagini/Camera Roll"
+    images_path = glob.glob(images_folder + "/*/*.jpg")
     # Write the dataset in the file
 
     with tf.io.TFRecordWriter(test_tfrecord_file) as writer:
-
         for image_path in tqdm(images_path):
             # Extract the face within a rectangle
 
             image = extract_face(image_path)
-            image_path = image_path.replace ( "\\", "/" )
-            image_path = image_path.replace("C:/Users/Adria/OneDrive/Desktop/test_images/test/","")
+            image_path = image_path.replace("\\", "/")
+            image_path = image_path.replace("C:/Users/Heisenberg/Desktop/test/", "")
             # Read image and save it in the tfrecord file
-            tf_example = image_example(image, image_path , image.shape[0], image.shape[1])
+            tf_example = image_example(image, image_path, image.shape[0], image.shape[1])
             writer.write(tf_example.SerializeToString())
 
-    print("Non cropped images: "+ str(non_cut))
+    print("Non cropped images: " + str(non_cut))
     print("Discarded_images: " + str(discarded))
 
 
@@ -112,9 +113,5 @@ def main():
     create_tfrecord()
 
 
-
 if __name__ == '__main__':
     main()
-
-
-

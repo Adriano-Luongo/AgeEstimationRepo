@@ -35,7 +35,7 @@ def read_tfrecord(record, labeled):
         else {
             'height': tf.io.FixedLenFeature([], tf.int64),
             'width': tf.io.FixedLenFeature([], tf.int64),
-            'path' : tf.io.FixedLenFeature([], tf.string),
+            'path': tf.io.FixedLenFeature([], tf.string),
             'image_raw': tf.io.FixedLenFeature([], tf.string),
         }
     )
@@ -44,9 +44,7 @@ def read_tfrecord(record, labeled):
 
     # Una volta parsato procediamo con prelevare i singoli campi
     # Iniziamo con il prelevare l'immagine in byte e convertirla in un immagine formato uint8
-    image = tf.io.decode_raw(
-        parsed_record['image_raw'], tf.uint8
-    )
+    image = tf.io.decode_raw(parsed_record['image_raw'], tf.uint8)
     # print ( f"Il numero totale degli elementi dell'immagine decodificata è {len ( image )}" )
 
     # Preleviamo altezza e larghezza per effettuare il resize dell'immagine
@@ -184,17 +182,15 @@ class Vgg2DatasetAge:
                 tf.keras.layers.Lambda(lambda x: data_preprocessing(x)),
                 tf.keras.layers.Lambda(lambda x: resize_images(x))
             ])
-            self.data = self.data.map(lambda x, y: (process_images(x) , y),
+            self.data = self.data.map(lambda x, y: (process_images(x), y),
                                       num_parallel_calls=AUTOTUNE)
-
 
         if self.labeled:
             # Rendiamo il dataset ripetuto
             self.data = self.data.repeat()
 
-            # Dividiamo il dataset in batches
-            self.data = self.data.batch ( batch_size=self.batch_size, drop_remainder=self.drop_remainder )
-
+        # Dividiamo il dataset in batches
+        self.data = self.data.batch(batch_size=self.batch_size, drop_remainder=self.drop_remainder)
 
         # Come da documentazione la pipeline di trasformazione dovrebbe terminare con prefetch
         # questo permette di caricare in maniera preventiva i dati necessari alla rete nel prossimo step
@@ -270,34 +266,24 @@ class Vgg2DatasetAge:
             '''
         print(f"Numero totale di immagini: {self.size}")
 
-'''
+
 # Testing
 def main():
-    dataset_utility = Vgg2DatasetAge('train', target_shape=(224, 224, 3), batch_size=4,
+    dataset_utility = Vgg2DatasetAge('test', target_shape=(224, 224, 3), batch_size=4,
                                      preprocessing='no')
     # Nel caso di get_data
     j = 0
     data = dataset_utility.get_data()
 
-    for record in data:
-        images, label = record
-        for image in images:
-            print(j)
-            image = np.array(image)
-            plt.xlabel(cv2.mean(image))
-            plt.imshow(image)
-            plt.show()
-            if j == 0:
-                break
-            j += 1
-        break
+    for image, label in data:
+        image = np.array(image)
+        plt.xlabel(label.numpy().decode('ascii'))
+        plt.imshow(image)
+        plt.show()
+        if j == 2:
+            break
+        j += 1
 
 
 if __name__ == '__main__':
     main()
-    main()
-    main()
-    main()
-    main()
-    main()
-'''
