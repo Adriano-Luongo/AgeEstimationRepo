@@ -66,8 +66,8 @@ Successivamente il comando seguente viene lanciato
 La batch size è impostata per decidere il numero di elementi da dare alla rete per la prediction ad ogni step. 
 
 
-## Acknowledgements
-The code in this repository also includes open keras implementations of well-known CNN architectures:
+## Fonti esterne
+Il codice all'interno della repository ha fatto utilizzo di codice presente in queste repository:
 * VGGFace: https://github.com/rcmalli/keras-vggface
 * BaseFramework: https://github.com/MiviaLab
 
