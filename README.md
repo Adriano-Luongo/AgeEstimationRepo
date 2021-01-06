@@ -2,10 +2,15 @@
 
 Questa repository contiene il codice relativo al documento "Contest di visione artificiale - Gruppo 12"
 I partecipanti sono:
+
 Adriano Luongo  a.luongo45@studenti.unisa.it
+
 Simone Cristofaro s.cristofaro3@studenti.unisa.it
+
 Elena Guzzo e.guzzo6@studenti.unisa.it
+
 Carmen Fucile c.fucile@studenti.unisa.it
+
 In particolare il seguente README fornisce le indicazioni richieste quali
 
 - Il codice usato per allenare la rete e istruzioni per riprodurre l'esperimento
@@ -61,10 +66,10 @@ Successivamente il comando seguente viene lanciato
 La batch size è impostata per decidere il numero di elementi da dare alla rete per la prediction ad ogni step. 
 
 
-## Acknowledgements
-The code in this repository also includes open keras implementations of well-known CNN architectures:
+## Fonti esterne
+Il codice all'interno della repository ha fatto utilizzo di codice presente in queste repository:
 * VGGFace: https://github.com/rcmalli/keras-vggface
-* BaseFramework: https://github.com/MiviaLab
+* BaseFramework: https://github.com/MiviaLab/GenderRecognitionFramework
 
 
 
