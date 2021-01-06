@@ -179,7 +179,7 @@ class Vgg2DatasetAge:
                                       num_parallel_calls=AUTOTUNE)
 
         if self.labeled:
-            # Rendiamo il dataset ripetuto
+            # Repeat the dataset endlessly
             self.data = self.data.repeat()
             # Shuffle the data
             self.data = self.data.shuffle(2048, reshuffle_each_iteration=True)
