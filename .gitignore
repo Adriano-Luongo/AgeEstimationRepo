@@ -16,3 +16,4 @@ tfrecords/valid.reduced(random).csv
 dataset/data/vggface2_data/train/train.reduced(random)_4.tfrecord
 dataset/__pycache__/face_detector.cpython-38.pyc
 tfrecords/__pycache__/image_cut_tool.cpython-38.pyc
+*.pyc

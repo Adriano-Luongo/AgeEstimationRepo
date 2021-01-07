@@ -210,7 +210,7 @@ if args.mode.startswith('train'):
 elif args.mode == 'test':
     # Load the weights
     model.load_weights(args.testweights)
-    path_of_csv = args.path_to_csv
+    path_of_csv = args.path_csv
 
     if path_of_csv is None:
         print("Please specify a path where to save the csv file")
@@ -221,7 +221,6 @@ elif args.mode == 'test':
 
         test_data = dataset_test.get_data()
         data_tfrecord = pd.DataFrame(columns=['path', 'age'])
-        j = 0
         for batch in test_data:
             images, paths = batch
             predicted_ages = model.predict(images, verbose=1, workers=4, batch_size=batch_size)
