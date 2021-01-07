@@ -249,8 +249,7 @@ class Vgg2DatasetAge:
         elif load_partition.startswith('val'):
             self.size = 20000
         elif load_partition.startswith('test'):
-           for _ in self.data:
-                self.size = self.size + 1
+            self.size = 169396
 
         print(f"Numero totale di immagini: {self.size}")
 
