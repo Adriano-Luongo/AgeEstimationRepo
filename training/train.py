@@ -118,6 +118,10 @@ model, feature_layer = get_model()
 
 # Print the model to look if everything was made correctly
 model.summary()
+import tensorflow as tf
+dot_img_file = 'model.png'
+tf.keras.utils.plot_model(model, to_file=dot_img_file, show_shapes=True)
+exit()
 
 # Weight decay if specified
 if args.weight_decay:
@@ -143,25 +147,6 @@ else:
 # Compile the model with previous informations
 model.compile(loss=loss, optimizer=optimizer, metrics=accuracy_metrics)
 
-# Here we build base path in which we are saving our weights and tensorBoard informations
-datetime = datetime.today().strftime('%Y%m%d_%H%M%S')
-dirname = "train_results_of_" + datetime
-dirname = os.path.join(args.base_path, dirname)
-if not os.path.isdir(dirname):
-    os.makedirs(dirname)
-
-# Subdirectory for weights
-filepath = os.path.join(dirname, "weights")
-if not os.path.isdir(filepath):
-    os.makedirs(filepath)  # Questa è la directory in cui viene salvato il file dei pesi
-# Name of the weight files, it depends from the epoch
-weight_file_name = os.path.join(filepath, "checkpoint.{epoch:02d}.hdf5")
-
-# Subdirectory for TensorBoard
-tensor_board_directory = os.path.join(dirname, "tensorBoard")
-if not os.path.isdir(filepath):
-    os.makedirs(tensor_board_directory)  # Questa è la directory in cui vengono salvati i file per Tensor Board per noi.
-
 # Select the chosen augmentation
 if args.augmentation == 'vggface2':
     from dataset_tools import VGGFace2Augmentation
@@ -174,6 +159,26 @@ else:  # default
 
 #If we are training our network
 if args.mode.startswith('train'):
+    # Here we build base path in which we are saving our weights and tensorBoard informations
+    datetime = datetime.today().strftime('%Y%m%d_%H%M%S')
+    dirname = "train_results_of_" + datetime
+    dirname = os.path.join(args.base_path, dirname)
+    if not os.path.isdir(dirname):
+        os.makedirs(dirname)
+
+    # Subdirectory for weights
+    filepath = os.path.join(dirname, "weights")
+    if not os.path.isdir(filepath):
+        os.makedirs(filepath)  # Questa è la directory in cui viene salvato il file dei pesi
+    # Name of the weight files, it depends from the epoch
+    weight_file_name = os.path.join(filepath, "checkpoint.{epoch:02d}.hdf5")
+
+    # Subdirectory for TensorBoard
+    tensor_board_directory = os.path.join(dirname, "tensorBoard")
+    if not os.path.isdir(filepath):
+        os.makedirs(
+            tensor_board_directory)  # Questa è la directory in cui vengono salvati i file per Tensor Board per noi.
+
     print("TRAINING %s" % dirname)
     dataset_training = Dataset('train', target_shape=INPUT_SHAPE, batch_size=batch_size,
                                preprocessing=args.preprocessing, custom_augmentation=custom_augmentation)
